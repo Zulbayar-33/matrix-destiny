@@ -18,7 +18,7 @@ st.set_page_config(
 # =========================
 # TITLE
 # =========================
-st.title("📄 zulbayaraas baymbaad")
+st.title("📄 Зулбаяраас Бямбаад төрсөн өдрийн бэлэг")
 st.write("Upload PDF and reduce file size easily.")
 
 # =========================
