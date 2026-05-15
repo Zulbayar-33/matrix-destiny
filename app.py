@@ -1,42 +1,30 @@
 # app.py
 
+import os
+os.environ["STREAMLIT_SERVER_HEADLESS"] = "true"
+
 import streamlit as st
 import subprocess
-import os
 import tempfile
 import shutil
 
-# =========================
-# PAGE CONFIG
-# =========================
 st.set_page_config(
     page_title="zulbayar",
     page_icon="📄",
     layout="centered"
 )
 
-# =========================
-# TITLE
-# =========================
 st.title("📄 Зулбаяраас Бямбаад төрсөн өдрийн бэлэг")
-st.write("Upload PDF and reduce file size easily.")
+st.write("PDF файлын хэмжээг багасгах app.")
 
-# =========================
-# GHOSTSCRIPT PATH
-# =========================
-GS_PATH = shutil.which("gs")
-
-# =========================
-# FILE UPLOAD
-# =========================
-uploaded_file = st.file_uploader(
-    "Choose PDF File",
-    type=["pdf"]
+GS_PATH = (
+    shutil.which("gs")
+    or shutil.which("gswin64c")
+    or shutil.which("gswin32c")
 )
 
-# =========================
-# COMPRESSION OPTIONS
-# =========================
+uploaded_file = st.file_uploader("Choose PDF File", type=["pdf"])
+
 reduce_option = st.selectbox(
     "Choose Compression Level",
     [
@@ -48,42 +36,26 @@ reduce_option = st.selectbox(
     format_func=lambda x: x[0]
 )
 
-# =========================
-# MAIN
-# =========================
 if uploaded_file:
+    input_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    output_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
 
-    # temp input file
-    input_path = tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".pdf"
-    ).name
+    input_path = input_file.name
+    output_path = output_file.name
 
-    # temp output file
-    output_path = tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".pdf"
-    ).name
+    input_file.close()
+    output_file.close()
 
-    # save uploaded file
     with open(input_path, "wb") as f:
-        f.write(uploaded_file.read())
+        f.write(uploaded_file.getbuffer())
 
-    # original size
     original_size = os.path.getsize(input_path) / 1024 / 1024
-
     st.info(f"Original File Size: {original_size:.2f} MB")
 
-    # =========================
-    # COMPRESS BUTTON
-    # =========================
     if st.button("🚀 Compress PDF"):
-
         try:
-
-            # check Ghostscript exists
-            if not os.path.exists(GS_PATH):
-                st.error("Ghostscript path is wrong.")
+            if GS_PATH is None:
+                st.error("Ghostscript Render дээр суусангүй. pikepdf version ашиглах хэрэгтэй.")
                 st.stop()
 
             command = [
@@ -98,24 +70,16 @@ if uploaded_file:
                 input_path,
             ]
 
-            # run Ghostscript
             subprocess.run(command, check=True)
 
-            # compressed size
             reduced_size = os.path.getsize(output_path) / 1024 / 1024
+            percent = ((original_size - reduced_size) / original_size) * 100
 
-            # reduction %
-            saved = original_size - reduced_size
-            percent = (saved / original_size) * 100
-
-            # success
             st.success("✅ PDF Compressed Successfully!")
-
             st.write(f"📄 Original Size: {original_size:.2f} MB")
             st.write(f"📦 Compressed Size: {reduced_size:.2f} MB")
             st.write(f"📉 Reduced By: {percent:.1f}%")
 
-            # download
             with open(output_path, "rb") as f:
                 st.download_button(
                     label="⬇ Download Reduced PDF",
