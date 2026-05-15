@@ -4,6 +4,7 @@ import streamlit as st
 import subprocess
 import os
 import tempfile
+import shutil
 
 # =========================
 # PAGE CONFIG
@@ -23,7 +24,7 @@ st.write("Upload PDF and reduce file size easily.")
 # =========================
 # GHOSTSCRIPT PATH
 # =========================
-GS_PATH = r"C:\Program Files\gs\gs10.07.0\bin\gswin64c.exe"
+GS_PATH = shutil.which("gs")
 
 # =========================
 # FILE UPLOAD
